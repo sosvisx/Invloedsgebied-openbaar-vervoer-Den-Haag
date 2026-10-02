@@ -1077,6 +1077,9 @@ button.pill:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 
 .lnTtl span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3;margin-top:1px}
 .lnHead{align-items:flex-start}.lnHead .lnBack,.lnHead .pill.lnBig,.lnHead .lnOff{margin-top:1px}
+
+#gdSum{white-space:nowrap}
+#gdChips .gchip{white-space:nowrap}
 </style>
 
 </head>
@@ -2406,6 +2409,38 @@ function citySetK(k){citySetRange(RS.lo,k);}
   document.querySelectorAll("#rsPre button").forEach(b=>b.onclick=()=>{const [a,z]=b.dataset.r.split(",").map(Number);citySetRange(a,z);});
 })();
 let armFocus=false;
+/* ---------- gebruiksdoel-filter (genest onder de pandenlaag) ---------- */
+(function(){
+  const wrap=document.getElementById("gdwrap"), disc=document.getElementById("gdDisc"),
+        gw=document.getElementById("gdgridwrap"), chips=document.getElementById("gdChips"),
+        sum=document.getElementById("gdSum"), reset=document.getElementById("gdReset"),
+        lyAdr=document.getElementById("lyAdr");
+  if(!wrap||!disc||!GD)return;
+  GDCATS.forEach((cat,c)=>{
+    const el=document.createElement("div");
+    el.className="gchip";el.dataset.on="0";el.style.setProperty("--gcc",cat.col);
+    el.innerHTML=`<i></i>${cat.lbl}`;
+    el.onclick=()=>{gdMask^=(1<<c);if(gdMask===1023)gdMask=0;applyGd();};
+    chips.appendChild(el);
+  });
+  function applyGd(){
+    updateAdrColors();refreshLost();
+    const n=gcArr(gdMask).length;
+    sum.textContent=gdMask?n+" gekozen":"alle";
+    sum.classList.toggle("act",!!gdMask);
+    reset.classList.toggle("show",!!gdMask);
+    chips.querySelectorAll(".gchip").forEach((el,c)=>el.dataset.on=((gdMask>>c)&1)?"1":"0");
+  }
+  window.applyGd=applyGd;
+  let open=false;
+  function setOpen(v){open=v;gw.classList.toggle("open",v);disc.setAttribute("aria-expanded",v?"true":"false");}
+  disc.onclick=()=>setOpen(!open);
+  reset.onclick=e=>{e.stopPropagation();gdMask=0;applyGd();};
+  // koppel aan de pandenlaag: uit = filter netjes inklappen (selectie blijft bewaard)
+  function syncLayer(){const on=lyAdr.checked;wrap.classList.toggle("hide",!on);if(!on)setOpen(false);}
+  lyAdr.addEventListener("change",syncLayer);
+  syncLayer();
+})();
 /* ---------- feature-states synchroniseren ---------- */
 const _stopOff=new Int8Array(N).fill(-1);
 function syncStopStates(skipLines){
